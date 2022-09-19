@@ -19,7 +19,8 @@ fn main() -> ! {
         pins.a4.into_pull_up_input(),
         // `A5`: I2C SCL signal.
         pins.a5.into_pull_up_input(),
-        50000,
+        // 400KHz bus speed.
+        400_000,
     );
 
     loop {}
