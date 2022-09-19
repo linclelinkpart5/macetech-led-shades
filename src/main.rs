@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+mod as1130;
+
 use arduino_hal::{I2c, Peripherals};
 use panic_halt as _;
 
