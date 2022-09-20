@@ -31,9 +31,13 @@ const CONTROL_OPEN_LED_BEGIN: u8 = 0x20;
 trait AS1130 {
     const ADDR: u8;
 
+    fn write(i2c: &mut I2c, bytes: &[u8]) -> Result<(), I2cError> {
+        i2c.write(Self::ADDR, bytes)
+    }
+
     /// Send a value to a device's register.
     fn write_register(i2c: &mut I2c, target_register: u8, value: u8) -> Result<(), I2cError> {
-        i2c.write(Self::ADDR, &[target_register, value])
+        Self::write(i2c, &[target_register, value])
     }
 
     /// Select control memory area for subsequent writes.
