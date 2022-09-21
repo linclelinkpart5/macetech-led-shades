@@ -28,6 +28,10 @@ const CONTROL_INTERRUPT_STATUS: u8 = 0x0E;
 const CONTROL_AS1130_STATUS: u8 = 0x0F;
 const CONTROL_OPEN_LED_BEGIN: u8 = 0x20;
 
+// Frame dimensions, note that these are for a single AS1130 chip!
+const FRAME_ROWS: usize = 8;
+const FRAME_COLS: usize = 12;
+
 trait AS1130 {
     const ADDR: u8;
 
@@ -192,6 +196,53 @@ trait AS1130 {
 
         let value = ((clock_speed & 0b11) << 2) | (sync_dir & 0b11);
         Self::write_register(i2c, CONTROL_CLK_SYNC, value)?;
+
+        Ok(())
+    }
+
+    fn write_bit_frame(
+        i2c: &mut I2c,
+        frame_index: u8,
+        bit_frame: &[u8; FRAME_COLS],
+    ) -> Result<(), I2cError> {
+        Self::write_register(i2c, REGISTER_SELECT, frame_index + MEMORY_ON_OFF_START)?;
+
+        let mut buffer = [0u8; FRAME_COLS * 2 + 1];
+
+        let mut i = 1;
+        for bits in bit_frame.iter() {
+            buffer[i] = *bits << 2;
+            i += 1;
+            buffer[i] = *bits >> 6;
+            i += 1;
+        }
+
+        Self::write(i2c, &buffer)?;
+
+        Ok(())
+    }
+
+    fn write_pwm_frame(
+        i2c: &mut I2c,
+        frame_index: u8,
+        pwm_frame: &[[u8; FRAME_ROWS]; FRAME_COLS],
+    ) -> Result<(), I2cError> {
+        Self::write_register(i2c, REGISTER_SELECT, frame_index + MEMORY_BLINK_PWM_START)?;
+
+        let mut buffer = [0u8; FRAME_COLS * (FRAME_ROWS + 1)];
+
+        let mut i = 0;
+        for x in 0..FRAME_COLS {
+            buffer[i] = 26 + (x as u8 * 11);
+            i += 1;
+
+            for y in 0..FRAME_ROWS {
+                buffer[i] = pwm_frame[x][y];
+                i += 1;
+            }
+        }
+
+        Self::write(i2c, &buffer)?;
 
         Ok(())
     }
