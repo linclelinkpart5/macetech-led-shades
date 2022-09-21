@@ -200,6 +200,7 @@ trait AS1130 {
         Ok(())
     }
 
+    /// Send contents of bit frame to correct AS1130 registers.
     fn write_bit_frame(
         i2c: &mut I2c,
         frame_index: u8,
@@ -222,6 +223,7 @@ trait AS1130 {
         Ok(())
     }
 
+    /// Send contents of PWM frame to correct AS1130 registers.
     fn write_pwm_frame(
         i2c: &mut I2c,
         frame_index: u8,
@@ -240,6 +242,30 @@ trait AS1130 {
                 buffer[i] = pwm_frame[x][y];
                 i += 1;
             }
+        }
+
+        Self::write(i2c, &buffer)?;
+
+        Ok(())
+    }
+
+    /// Send contents of bit frame to blink AS1130 registers.
+    /// Mostly used to clear blink frames, since blink is useless.
+    fn write_blink_frame(
+        i2c: &mut I2c,
+        frame_index: u8,
+        bit_frame: &[u8; FRAME_COLS],
+    ) -> Result<(), I2cError> {
+        Self::write_register(i2c, REGISTER_SELECT, frame_index + MEMORY_BLINK_PWM_START)?;
+
+        let mut buffer = [0u8; FRAME_COLS * 2 + 1];
+
+        let mut i = 1;
+        for bits in bit_frame.iter() {
+            buffer[i] = *bits << 2;
+            i += 1;
+            buffer[i] = *bits >> 6;
+            i += 1;
         }
 
         Self::write(i2c, &buffer)?;
