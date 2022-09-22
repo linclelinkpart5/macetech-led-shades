@@ -2,6 +2,7 @@
 #![no_main]
 
 mod as1130;
+mod frame;
 
 use arduino_hal::{I2c, Peripherals};
 use panic_halt as _;

@@ -2,6 +2,8 @@ use arduino_hal::i2c::Error as I2cError;
 use arduino_hal::I2c;
 use embedded_hal::blocking::i2c::Write;
 
+use crate::frame::{BitFrame, FrameHelpers, PwmFrame};
+
 // Entry code for changing memory registers.
 const REGISTER_SELECT: u8 = 0xFD;
 
@@ -27,10 +29,6 @@ const CONTROL_CLK_SYNC: u8 = 0x0B;
 const CONTROL_INTERRUPT_STATUS: u8 = 0x0E;
 const CONTROL_AS1130_STATUS: u8 = 0x0F;
 const CONTROL_OPEN_LED_BEGIN: u8 = 0x20;
-
-// Frame dimensions, note that these are for a single AS1130 chip!
-const FRAME_ROWS: usize = 8;
-const FRAME_COLS: usize = 12;
 
 trait AS1130 {
     const ADDR: u8;
@@ -204,19 +202,11 @@ trait AS1130 {
     fn write_bit_frame(
         i2c: &mut I2c,
         frame_index: u8,
-        bit_frame: &[u8; FRAME_COLS],
+        bit_frame: &BitFrame,
     ) -> Result<(), I2cError> {
         Self::write_register(i2c, REGISTER_SELECT, frame_index + MEMORY_ON_OFF_START)?;
 
-        let mut buffer = [0u8; FRAME_COLS * 2 + 1];
-
-        let mut i = 1;
-        for bits in bit_frame.iter() {
-            buffer[i] = *bits << 2;
-            i += 1;
-            buffer[i] = *bits >> 6;
-            i += 1;
-        }
+        let buffer = FrameHelpers::create_bit_buffer(bit_frame);
 
         Self::write(i2c, &buffer)?;
 
@@ -227,22 +217,11 @@ trait AS1130 {
     fn write_pwm_frame(
         i2c: &mut I2c,
         frame_index: u8,
-        pwm_frame: &[[u8; FRAME_ROWS]; FRAME_COLS],
+        pwm_frame: &PwmFrame,
     ) -> Result<(), I2cError> {
         Self::write_register(i2c, REGISTER_SELECT, frame_index + MEMORY_BLINK_PWM_START)?;
 
-        let mut buffer = [0u8; FRAME_COLS * (FRAME_ROWS + 1)];
-
-        let mut i = 0;
-        for x in 0..FRAME_COLS {
-            buffer[i] = 26 + (x as u8 * 11);
-            i += 1;
-
-            for y in 0..FRAME_ROWS {
-                buffer[i] = pwm_frame[x][y];
-                i += 1;
-            }
-        }
+        let buffer = FrameHelpers::create_pwm_buffer(pwm_frame);
 
         Self::write(i2c, &buffer)?;
 
@@ -254,19 +233,11 @@ trait AS1130 {
     fn write_blink_frame(
         i2c: &mut I2c,
         frame_index: u8,
-        bit_frame: &[u8; FRAME_COLS],
+        bit_frame: &BitFrame,
     ) -> Result<(), I2cError> {
         Self::write_register(i2c, REGISTER_SELECT, frame_index + MEMORY_BLINK_PWM_START)?;
 
-        let mut buffer = [0u8; FRAME_COLS * 2 + 1];
-
-        let mut i = 1;
-        for bits in bit_frame.iter() {
-            buffer[i] = *bits << 2;
-            i += 1;
-            buffer[i] = *bits >> 6;
-            i += 1;
-        }
+        let buffer = FrameHelpers::create_bit_buffer(bit_frame);
 
         Self::write(i2c, &buffer)?;
 
