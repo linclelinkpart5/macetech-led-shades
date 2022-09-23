@@ -3,6 +3,7 @@
 
 mod as1130;
 mod frame;
+mod glasses;
 
 use arduino_hal::{I2c, Peripherals};
 use panic_halt as _;
