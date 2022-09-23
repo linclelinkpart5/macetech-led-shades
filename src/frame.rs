@@ -55,4 +55,14 @@ impl FrameHelpers {
     pub(crate) fn fill_pwm_frame(pwm_frame: &mut PwmFrame, fill_value: u8) {
         pwm_frame.fill(fill_value)
     }
+
+    pub(crate) fn invert_bit_frame(bit_frame: &mut BitFrame) {
+        bit_frame.iter_mut().for_each(|bits| *bits = !*bits);
+    }
+
+    pub(crate) fn invert_pwm_frame(pwm_frame: &mut PwmFrame) {
+        pwm_frame
+            .iter_mut()
+            .for_each(|byte| *byte = u8::MAX - *byte);
+    }
 }
