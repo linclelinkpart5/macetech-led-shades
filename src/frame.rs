@@ -5,7 +5,7 @@ pub(crate) const FRAME_COLS: usize = 12;
 pub(crate) type BitFrame = [u8; FRAME_COLS];
 pub(crate) type BitBuffer = [u8; FRAME_COLS * 2 + 1];
 
-pub(crate) type PwmFrame = [[u8; FRAME_ROWS]; FRAME_COLS];
+pub(crate) type PwmFrame = [u8; FRAME_ROWS * FRAME_COLS];
 pub(crate) type PwmBuffer = [u8; FRAME_COLS * (FRAME_ROWS + 1)];
 
 pub(crate) struct FrameHelpers;
@@ -34,16 +34,25 @@ impl FrameHelpers {
 
         let mut i = 0;
 
-        for x in 0..FRAME_COLS {
-            buffer[i] = 26 + (x as u8 * 11);
-            i += 1;
-
-            for y in 0..FRAME_ROWS {
-                buffer[i] = pwm_frame[x][y];
+        for (x, byte) in pwm_frame.iter().enumerate() {
+            if x % FRAME_COLS == 0 {
+                buffer[i] = 26 + (x as u8 * 11);
                 i += 1;
             }
+
+            buffer[i] = *byte;
+            i += 1;
         }
 
         buffer
+    }
+
+    pub(crate) fn fill_bit_frame(bit_frame: &mut BitFrame, on: bool) {
+        let fill_value = on.then_some(u8::MAX).unwrap_or(0);
+        bit_frame.fill(fill_value)
+    }
+
+    pub(crate) fn fill_pwm_frame(pwm_frame: &mut PwmFrame, fill_value: u8) {
+        pwm_frame.fill(fill_value)
     }
 }
