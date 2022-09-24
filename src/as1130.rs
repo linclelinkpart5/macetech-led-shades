@@ -1,5 +1,6 @@
 use arduino_hal::i2c::Error as I2cError;
 use arduino_hal::I2c;
+use bitflags::bitflags;
 use embedded_hal::blocking::i2c::Write;
 
 use crate::frame::{BitFrame, FrameHelpers, PwmFrame};
@@ -256,4 +257,88 @@ impl AS1130 for AS1130_L {
 
 impl AS1130 for AS1130_R {
     const ADDR: u8 = 0x37;
+}
+
+bitflags! {
+    // #define AS1130_low_vdd_rst 7
+    // #define AS1130_low_vdd_stat 6
+    // #define AS1130_led_error_correction 5
+    // #define AS1130_dot_corr 4
+    // #define AS1130_common_addr 3
+    struct ConfigFlags: u8 {
+        const LOW_VDD_RST = 0b1 << 7;
+        const LOW_VDD_STAT = 0b1 << 6;
+        const LED_ERROR_CORR = 0b1 << 5;
+        const DOT_CORR = 0b1 << 4;
+        const COMMON_ADDR = 0b1 << 3;
+        // const MEM_CONFIG_2 = 0b1 << 2;
+        // const MEM_CONFIG_1 = 0b1 << 1;
+        // const MEM_CONFIG_0 = 0b1 << 0;
+    }
+}
+
+impl ConfigFlags {
+    pub(crate) fn with_mem_config(self, mem_config: u8) -> Self {
+        const MASK: u8 = 0b111;
+
+        let bits =
+            // Reset memory config bits to 0.
+            (self.bits & !MASK)
+            // Set memory config bits to desired values.
+            | (mem_config & MASK);
+
+        unsafe { Self::from_bits_unchecked(bits) }
+    }
+}
+
+bitflags! {
+    // #define AS1130_selected_pic 7
+    // #define AS1130_watchdog 6
+    // #define AS1130_por 5
+    // #define AS1130_overtemp 4
+    // #define AS1130_low_vdd 3
+    // #define AS1130_open_err 2
+    // #define AS1130_short_err 1
+    // #define AS1130_movie_fin 0
+    struct InterruptMaskFlags: u8 {
+        const SELECTED_PIC = 0b1 << 7;
+        const WATCHDOG = 0b1 << 6;
+        const POR = 0b1 << 5;
+        const OVERTEMP = 0b1 << 4;
+        const LOW_VDD = 0b1 << 3;
+        const OPEN_ERR = 0b1 << 2;
+        const SHORT_ERR = 0b1 << 1;
+        const MOVIE_FIN = 0b1 << 0;
+    }
+}
+
+bitflags! {
+    // #define AS1130_test_all 4
+    // #define AS1130_auto_test 3
+    // #define AS1130_manual_test 2
+    // #define AS1130_init 1
+    // #define AS1130_shdn 0
+    struct ShutdownTestFlags: u8 {
+        const TEST_ALL = 0b1 << 4;
+        const AUTO_TEST = 0b1 << 3;
+        const MANUAL_TEST = 0b1 << 2;
+        const INIT = 0b1 << 1;
+        const SHDN = 0b1 << 0;
+    }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone)]
+enum ClockSpeed {
+    Mhz1 = 0b00,
+    Khz500 = 0b01,
+    Khz125 = 0b10,
+    Khz32 = 0b11,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone)]
+enum SyncDir {
+    In = 0b01,
+    Out = 0b10,
 }
