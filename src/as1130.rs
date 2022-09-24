@@ -31,7 +31,7 @@ const CONTROL_INTERRUPT_STATUS: u8 = 0x0E;
 const CONTROL_AS1130_STATUS: u8 = 0x0F;
 const CONTROL_OPEN_LED_BEGIN: u8 = 0x20;
 
-trait AS1130 {
+pub(crate) trait AS1130 {
     const ADDR: u8;
 
     fn write(i2c: &mut I2c, bytes: &[u8]) -> Result<(), I2cError> {
@@ -164,7 +164,11 @@ trait AS1130 {
     }
 
     /// Configure clock sync.
-    fn set_clock_sync(i2c: &mut I2c, clock_speed: ClockSpeed, sync_dir: SyncDir) -> Result<(), I2cError> {
+    fn set_clock_sync(
+        i2c: &mut I2c,
+        clock_speed: ClockSpeed,
+        sync_dir: SyncDir,
+    ) -> Result<(), I2cError> {
         Self::select_control_memory(i2c)?;
 
         let value = (clock_speed as u8) | (sync_dir as u8);
@@ -239,7 +243,7 @@ bitflags! {
     // #define AS1130_led_error_correction 5
     // #define AS1130_dot_corr 4
     // #define AS1130_common_addr 3
-    struct ConfigFlags: u8 {
+    pub(crate) struct ConfigFlags: u8 {
         const LOW_VDD_RST = 0b1 << 7;
         const LOW_VDD_STAT = 0b1 << 6;
         const LED_ERROR_CORR = 0b1 << 5;
@@ -274,7 +278,7 @@ bitflags! {
     // #define AS1130_open_err 2
     // #define AS1130_short_err 1
     // #define AS1130_movie_fin 0
-    struct InterruptMaskFlags: u8 {
+    pub(crate) struct InterruptMaskFlags: u8 {
         const SELECTED_PIC = 0b1 << 7;
         const WATCHDOG = 0b1 << 6;
         const POR = 0b1 << 5;
@@ -292,7 +296,7 @@ bitflags! {
     // #define AS1130_manual_test 2
     // #define AS1130_init 1
     // #define AS1130_shdn 0
-    struct ShutdownTestFlags: u8 {
+    pub(crate) struct ShutdownTestFlags: u8 {
         const TEST_ALL = 0b1 << 4;
         const AUTO_TEST = 0b1 << 3;
         const MANUAL_TEST = 0b1 << 2;
@@ -303,7 +307,7 @@ bitflags! {
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
-enum ClockSpeed {
+pub(crate) enum ClockSpeed {
     Mhz1 = 0b0000,
     Khz500 = 0b0100,
     Khz125 = 0b1000,
@@ -312,7 +316,7 @@ enum ClockSpeed {
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
-enum SyncDir {
+pub(crate) enum SyncDir {
     In = 0b01,
     Out = 0b10,
 }

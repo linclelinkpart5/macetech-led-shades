@@ -8,6 +8,11 @@ pub(crate) type BitBuffer = [u8; FRAME_COLS * 2 + 1];
 pub(crate) type PwmFrame = [u8; FRAME_ROWS * FRAME_COLS];
 pub(crate) type PwmBuffer = [u8; FRAME_COLS * (FRAME_ROWS + 1)];
 
+pub(crate) const EMPTY_BIT_FRAME: BitFrame = [0u8; FRAME_COLS];
+pub(crate) const EMPTY_PWM_FRAME: PwmFrame = [0u8; FRAME_ROWS * FRAME_COLS];
+pub(crate) const SOLID_BIT_FRAME: BitFrame = [u8::MAX; FRAME_COLS];
+pub(crate) const SOLID_PWM_FRAME: PwmFrame = [u8::MAX; FRAME_ROWS * FRAME_COLS];
+
 pub(crate) struct FrameHelpers;
 
 impl FrameHelpers {
