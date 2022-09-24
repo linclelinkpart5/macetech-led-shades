@@ -7,7 +7,8 @@ use crate::as1130::{
     AS1130_R,
 };
 use crate::frame::{
-    BitFrame, FrameHelpers, PwmFrame, EMPTY_BIT_FRAME, EMPTY_PWM_FRAME, SOLID_PWM_FRAME,
+    BitFrame, FrameHelpers, PwmFrame, EMPTY_BIT_FRAME, EMPTY_PWM_FRAME, SOLID_BIT_FRAME,
+    SOLID_PWM_FRAME,
 };
 
 pub(crate) type Result = core::result::Result<(), I2cError>;
@@ -20,6 +21,7 @@ pub(crate) struct Glasses {
     pwm_frame_l: PwmFrame,
     pwm_frame_r: PwmFrame,
     i2c: I2c,
+    brightness: u8,
 }
 
 impl Glasses {
@@ -30,6 +32,7 @@ impl Glasses {
             pwm_frame_l: EMPTY_PWM_FRAME,
             pwm_frame_r: EMPTY_PWM_FRAME,
             i2c,
+            brightness: STARTING_BRIGHTNESS,
         }
     }
 
@@ -97,4 +100,42 @@ impl Glasses {
 
         Ok(())
     }
+
+    pub(crate) fn switch_draw_type(&mut self, frame_index: u8, draw_type: DrawType) -> Result {
+        match draw_type {
+            DrawType::Bit => {
+                self.bit_frame_l = EMPTY_BIT_FRAME;
+                self.bit_frame_r = EMPTY_BIT_FRAME;
+
+                AS1130_L::write_bit_frame(&mut self.i2c, frame_index, &self.bit_frame_l)?;
+                AS1130_R::write_bit_frame(&mut self.i2c, frame_index, &self.bit_frame_r)?;
+
+                self.pwm_frame_l = SOLID_PWM_FRAME;
+                self.pwm_frame_r = SOLID_PWM_FRAME;
+
+                AS1130_L::write_pwm_frame(&mut self.i2c, 0, &self.pwm_frame_l)?;
+                AS1130_R::write_pwm_frame(&mut self.i2c, 0, &self.pwm_frame_r)?;
+            }
+            DrawType::Pwm => {
+                self.pwm_frame_l = EMPTY_PWM_FRAME;
+                self.pwm_frame_r = EMPTY_PWM_FRAME;
+
+                AS1130_L::write_pwm_frame(&mut self.i2c, 0, &self.pwm_frame_l)?;
+                AS1130_R::write_pwm_frame(&mut self.i2c, 0, &self.pwm_frame_r)?;
+
+                self.bit_frame_l = SOLID_BIT_FRAME;
+                self.bit_frame_r = SOLID_BIT_FRAME;
+
+                AS1130_L::write_bit_frame(&mut self.i2c, frame_index, &self.bit_frame_l)?;
+                AS1130_R::write_bit_frame(&mut self.i2c, frame_index, &self.bit_frame_r)?;
+            }
+        };
+
+        Ok(())
+    }
+}
+
+pub(crate) enum DrawType {
+    Pwm,
+    Bit,
 }
