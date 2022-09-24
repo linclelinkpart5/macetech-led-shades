@@ -118,32 +118,19 @@ trait AS1130 {
     }
 
     /// Set configuration options.
-    // #define AS1130_low_vdd_rst 7
-    // #define AS1130_low_vdd_stat 6
-    // #define AS1130_led_error_correction 5
-    // #define AS1130_dot_corr 4
-    // #define AS1130_common_addr 3
-    fn set_configs(i2c: &mut I2c, options: u8, mem_config: u8) -> Result<(), I2cError> {
+    fn set_configs(i2c: &mut I2c, flags: ConfigFlags, mem_config: u8) -> Result<(), I2cError> {
         Self::select_control_memory(i2c)?;
 
-        let value = options | (mem_config & 0b111);
+        let value = flags.with_mem_config(mem_config).bits;
         Self::write_register(i2c, CONTROL_AS1130_CONFIG, value)?;
 
         Ok(())
     }
 
     /// Configure interrupt mask.
-    // #define AS1130_selected_pic 7
-    // #define AS1130_watchdog 6
-    // #define AS1130_por 5
-    // #define AS1130_overtemp 4
-    // #define AS1130_low_vdd 3
-    // #define AS1130_open_err 2
-    // #define AS1130_short_err 1
-    // #define AS1130_movie_fin 0
-    fn set_interrupt_mask(i2c: &mut I2c, options: u8) -> Result<(), I2cError> {
+    fn set_interrupt_mask(i2c: &mut I2c, flags: InterruptMaskFlags) -> Result<(), I2cError> {
         Self::select_control_memory(i2c)?;
-        Self::write_register(i2c, CONTROL_INTERRUPT_MASK, options)?;
+        Self::write_register(i2c, CONTROL_INTERRUPT_MASK, flags.bits)?;
 
         Ok(())
     }
@@ -159,16 +146,9 @@ trait AS1130 {
     }
 
     /// Configure test/shutdown register.
-    // #define AS1130_test_all 4
-    // #define AS1130_auto_test 3
-    // #define AS1130_manual_test 2
-    // #define AS1130_init 1
-    // #define AS1130_shdn 0
-    fn set_shutdown_test(i2c: &mut I2c, options: u8) -> Result<(), I2cError> {
+    fn set_shutdown_test(i2c: &mut I2c, flags: ShutdownTestFlags) -> Result<(), I2cError> {
         Self::select_control_memory(i2c)?;
-
-        let value = options & 0b11111;
-        Self::write_register(i2c, CONTROL_SHUTDOWN_OPEN_SHORT, value)?;
+        Self::write_register(i2c, CONTROL_SHUTDOWN_OPEN_SHORT, flags.bits)?;
 
         Ok(())
     }
@@ -184,16 +164,10 @@ trait AS1130 {
     }
 
     /// Configure clock sync.
-    // #define AS1130_clock_speed_1MHz 0b00
-    // #define AS1130_clock_speed_500kHz 0b01
-    // #define AS1130_clock_speed_125kHz 0b10
-    // #define AS1130_clock_speed_32kHz 0b11
-    // #define AS1130_sync_OUT 0b10
-    // #define AS1130_sync_IN 0b01
-    fn set_clock_sync(i2c: &mut I2c, clock_speed: u8, sync_dir: u8) -> Result<(), I2cError> {
+    fn set_clock_sync(i2c: &mut I2c, clock_speed: ClockSpeed, sync_dir: SyncDir) -> Result<(), I2cError> {
         Self::select_control_memory(i2c)?;
 
-        let value = ((clock_speed & 0b11) << 2) | (sync_dir & 0b11);
+        let value = (clock_speed as u8) | (sync_dir as u8);
         Self::write_register(i2c, CONTROL_CLK_SYNC, value)?;
 
         Ok(())
@@ -330,10 +304,10 @@ bitflags! {
 #[repr(u8)]
 #[derive(Copy, Clone)]
 enum ClockSpeed {
-    Mhz1 = 0b00,
-    Khz500 = 0b01,
-    Khz125 = 0b10,
-    Khz32 = 0b11,
+    Mhz1 = 0b0000,
+    Khz500 = 0b0100,
+    Khz125 = 0b1000,
+    Khz32 = 0b1100,
 }
 
 #[repr(u8)]
