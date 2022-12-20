@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(iter_advance_by)]
 
 mod as1130;
 mod frame;

@@ -1,6 +1,5 @@
 use arduino_hal::i2c::Error as I2cError;
 use arduino_hal::I2c;
-use embedded_hal::can::Frame;
 
 use crate::as1130::{
     ClockSpeed, ConfigFlags, InterruptMaskFlags, ShutdownTestFlags, SyncDir, AS1130, AS1130_L,
