@@ -3,7 +3,6 @@
 #![feature(iter_advance_by)]
 
 mod as1130;
-mod buffer;
 mod frame;
 mod glasses;
 
